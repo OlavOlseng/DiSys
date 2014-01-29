@@ -5,6 +5,9 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
 import java.awt.*;
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
@@ -87,8 +90,21 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 
 	}
 
-	void connectToHost(String address) {
-
+	void connectToHost(String address) 
+	{
+		String url = "rmi://" + address +"/TicTacToe";
+		try {
+			remoteBoard = (TicTacToe) Naming.lookup(url);
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public void setStatusMessage(String status)
