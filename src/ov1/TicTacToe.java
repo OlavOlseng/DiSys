@@ -27,8 +27,9 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 	private final JTable board;
 	private final JLabel statusLabel = new JLabel();
 	private final char playerMarks[] = {'X', 'O'};
-	private TicTacToe remoteBoard;
+	private TicTacToe remotePlayer;
 	private int currentPlayer = 0; // Player to set the next mark.
+	private int thisPlayer = 0;
 
 	public static void main(String args[])
 	{
@@ -37,11 +38,18 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 			ttt = new TicTacToe();
 			if (args.length == 0)
 			{
+				ttt.thisPlayer = 0;
+				ttt.statusLabel.setText("Waiting for other player...");
 				ttt.waitForConnection();
+				ttt.statusLabel.setText("Other player connected...");
 			}
 			else
 			{
+				ttt.thisPlayer = 1;
+				ttt.statusLabel.setText(String.format("Connecting to host at %s...", args[0]));
 				ttt.connectToHost(args[0]);
+				ttt.statusLabel.setText("Connection success...");
+				
 			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
@@ -110,7 +118,7 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 	public void setStatusMessage(String status)
 	{
 		statusLabel.setText(status);
-		remoteBoard.statusLabel.setText(status);
+		remotePlayer.statusLabel.setText(status);
 	}
 
 	/**
@@ -129,8 +137,11 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 		int y = board.getSelectedRow();
 		if (x == -1 || y == -1 || !boardModel.isEmpty(x, y))
 			return;
+		if (currentPlayer != thisPlayer)
+			return;
 		if (boardModel.setCell(x, y, playerMarks[currentPlayer]))
 			setStatusMessage("Player " + playerMarks[currentPlayer] + " won!");
+		remotePlayer.boardModel.setCell(x, y, playerMarks[currentPlayer]);
 		currentPlayer = 1 - currentPlayer; // The next turn is by the other player.
 	}
 }
