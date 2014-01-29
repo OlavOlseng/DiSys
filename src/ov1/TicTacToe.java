@@ -4,7 +4,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import sun.misc.Resource;
+
 import java.awt.*;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -30,7 +33,8 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 	private TicTacToeRemote remotePlayer;
 	private int currentPlayer = 0; // Player to set the next mark.
 	private int thisPlayer = 0;
-
+	private boolean isWon = false;
+	
 	public static void main(String args[])
 	{
 		TicTacToe ttt = null;
@@ -145,21 +149,22 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 
 	public void setCell(int x, int y)
 	{
-		if (boardModel.setCell(x, y, playerMarks[currentPlayer]))
-			setStatusMessage("Player " + playerMarks[currentPlayer] + " won!");
-		else
-			this.statusLabel.setText("Your turn");
-		
-		currentPlayer = 1 - currentPlayer; // The next turn is by the other player.
-		
-	
+		isWon = boardModel.setCell(x, y, playerMarks[currentPlayer]);
+		if (!isWon)
+			currentPlayer = 1 - currentPlayer;
 	}
+	
 	public void setStatusMessage(String status)
 	{
 		if(this.statusLabel.getText().equals(status))
 			return;
 		statusLabel.setText(status);
-		//remotePlayer.statusLabel.setText(status);
+		try {
+			remotePlayer.setStatusMessage(status);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	/**
@@ -172,6 +177,7 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 	 */
 	public void valueChanged(ListSelectionEvent e)
 	{
+		if (isWon) return;
 		if (e.getValueIsAdjusting())
 			return;
 		int x = board.getSelectedColumn();
@@ -186,18 +192,19 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 		try {
 			remotePlayer.setCell(x, y);
 		} catch (RemoteException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		
-		if (boardModel.setCell(x, y, playerMarks[currentPlayer]))
+		isWon = (boardModel.setCell(x, y, playerMarks[currentPlayer]));
+		if(isWon)
 		{
 			setStatusMessage("Player " + playerMarks[currentPlayer] + " won!");
-			return;
 		}
-		currentPlayer = 1 - currentPlayer;
-		setStatusMessage("Current player:" + playerMarks[currentPlayer]);;
-		
+		else
+		{
+			currentPlayer = 1 - currentPlayer;
+			setStatusMessage("Current player:" + playerMarks[currentPlayer]);;
+		}
 		
 	}
 }
