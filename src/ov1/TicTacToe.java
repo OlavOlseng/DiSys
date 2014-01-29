@@ -27,7 +27,7 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 	private final JTable board;
 	private final JLabel statusLabel = new JLabel();
 	private final char playerMarks[] = {'X', 'O'};
-	private TicTacToe remotePlayer;
+	private TicTacToeRemote remotePlayer;
 	private int currentPlayer = 0; // Player to set the next mark.
 	private int thisPlayer = 0;
 
@@ -41,7 +41,7 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 				ttt.thisPlayer = 0;
 				ttt.statusLabel.setText("Waiting for other player...");
 				ttt.waitForConnection();
-				ttt.statusLabel.setText("Other player connected...");
+				
 			}
 			else
 			{
@@ -95,21 +95,16 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 	}
 
 	
-	void ClientDidConnect(String registryUrl)
+	public void clientConnected(TicTacToeRemote remote)
 	{
-		System.out.println(registryUrl);
-		try {
-			remotePlayer = (TicTacToe)Naming.lookup(registryUrl);
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NotBoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
+		System.out.println(remote);
+	
+		remotePlayer = remote;
+		this.statusLabel.setText("Other player connected...");
+		
+		
+		
 	}
 	
 	void waitForConnection() {
@@ -133,8 +128,8 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 	{
 		String url = "rmi://" + address +"/TicTacToeHost";
 		try {
-			remotePlayer = (TicTacToe) Naming.lookup(url);
-			
+			remotePlayer = (TicTacToeRemote) Naming.lookup(url);
+			remotePlayer.clientConnected(this);
 			Naming.rebind("rmi://" + address +"/TicTacToeClient", this);
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
@@ -148,14 +143,25 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 		}
 	}
 
+	public void setCell(int x, int y)
+	{
+		if (boardModel.setCell(x, y, playerMarks[currentPlayer]))
+			setStatusMessage("Player " + playerMarks[currentPlayer] + " won!");
+		else
+			this.statusLabel.setText("Your turn");
+		
+		currentPlayer = 1 - currentPlayer; // The next turn is by the other player.
+		
+	
+	}
 	public void setStatusMessage(String status)
 	{
 		if(this.statusLabel.getText().equals(status))
 			return;
 		statusLabel.setText(status);
-		remotePlayer.statusLabel.setText(status);
+		//remotePlayer.statusLabel.setText(status);
 	}
-
+	
 	/**
 	 * This has to be modified. Currently the application is stand-alone so
 	 * both players have to use the same computer.
@@ -174,9 +180,24 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 			return;
 		if (currentPlayer != thisPlayer)
 			return;
+		
+		// The next turn is by the other player.
+	
+		try {
+			remotePlayer.setCell(x, y);
+		} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		if (boardModel.setCell(x, y, playerMarks[currentPlayer]))
+		{
 			setStatusMessage("Player " + playerMarks[currentPlayer] + " won!");
-		remotePlayer.boardModel.setCell(x, y, playerMarks[currentPlayer]);
-		currentPlayer = 1 - currentPlayer; // The next turn is by the other player.
+			return;
+		}
+		currentPlayer = 1 - currentPlayer;
+		setStatusMessage("Current player:" + playerMarks[currentPlayer]);;
+		
+		
 	}
 }
