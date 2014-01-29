@@ -94,15 +94,48 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 		frame.setVisible(true);
 	}
 
+	
+	void ClientDidConnect(String registryUrl)
+	{
+		System.out.println(registryUrl);
+		try {
+			remotePlayer = (TicTacToe)Naming.lookup(registryUrl);
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NotBoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	void waitForConnection() {
-
+		String url = "rmi://127.0.0.1:3320/TicTacToeHost";
+		try {
+			Naming.rebind(url, this);
+			
+		} catch (RemoteException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MalformedURLException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 	void connectToHost(String address) 
 	{
-		String url = "rmi://" + address +"/TicTacToe";
+		String url = "rmi://" + address +"/TicTacToeHost";
 		try {
-			remoteBoard = (TicTacToe) Naming.lookup(url);
+			remotePlayer = (TicTacToe) Naming.lookup(url);
+			
+			Naming.rebind("rmi://" + address +"/TicTacToeClient", this);
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -117,6 +150,8 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 
 	public void setStatusMessage(String status)
 	{
+		if(this.statusLabel.getText().equals(status))
+			return;
 		statusLabel.setText(status);
 		remotePlayer.statusLabel.setText(status);
 	}
