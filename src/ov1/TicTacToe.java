@@ -44,6 +44,7 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 			{
 				ttt.thisPlayer = 0;
 				ttt.statusLabel.setText("Waiting for other player...");
+				//This client had no arguments, and is therefore waiting for a remote client.
 				ttt.waitForConnection();
 				
 			}
@@ -51,12 +52,13 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 			{
 				ttt.thisPlayer = 1;
 				ttt.statusLabel.setText(String.format("Connecting to host at %s...", args[0]));
+				//This client had arguments and is there initiating a connection with someone else.
 				ttt.connectToHost(args[0]);
-				ttt.statusLabel.setText("Connection success...");
 				
 			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
+			ttt.statusLabel.setText("FATAL ERROR....");
 			System.err.println("Fatal Error...");
 			System.exit(1337);
 		}
@@ -101,16 +103,14 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 	
 	public void clientConnected(TicTacToeRemote remote)
 	{
-		
 		System.out.println(remote);
-	
 		remotePlayer = remote;
 		this.statusLabel.setText("Other player connected...");
-		
-		
-		
 	}
 	
+	/**
+	 * This binds a name for itself in the rmi registry on port 3320, so other people can find it.
+	 */
 	void waitForConnection() {
 		String url = "rmi://127.0.0.1:3320/TicTacToeHost";
 		try {
@@ -125,9 +125,14 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 	}
 
+	/***
+	 * This methods tries to register a remote object on the given ip address.
+	 * After it registers itself in the rmi registry on port 3320.
+	 * It then registers itself on the clientside by invoking a method with itself as a parameter.
+	 * @param address IP address and port should be set to 3320.
+	 */
 	void connectToHost(String address) 
 	{
 		String url = "rmi://" + address +"/TicTacToeHost";
@@ -135,6 +140,7 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 			remotePlayer = (TicTacToeRemote) Naming.lookup(url);
 			remotePlayer.clientConnected(this);
 			Naming.rebind("rmi://" + address +"/TicTacToeClient", this);
+			statusLabel.setText("Connection success...");
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -146,7 +152,13 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 			e.printStackTrace();
 		}
 	}
-
+	
+	
+	/***
+	 * A remote method invoked on the other players board. 
+	 * It updates the board to the correct state. It is called automagically when the local board is changed.
+	 * It also sets the currentPlayer variable correctly.
+	 */
 	public void setCell(int x, int y)
 	{
 		isWon = boardModel.setCell(x, y, playerMarks[currentPlayer]);
@@ -154,6 +166,10 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 			currentPlayer = 1 - currentPlayer;
 	}
 	
+	/***
+	 * This method invokes itself recursively on the remote client. 
+	 * Using this method to set the status text will result in the same message being displayed on the remote client.
+	 */
 	public void setStatusMessage(String status)
 	{
 		if(this.statusLabel.getText().equals(status))
@@ -174,6 +190,7 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 	 * When completed, marks from the first player originates from a ListSelectionEvent
 	 * and is then sent to the second player. And marks from the second player is received
 	 * and added to the board of the first player.
+	 * CHECK
 	 */
 	public void valueChanged(ListSelectionEvent e)
 	{
@@ -203,8 +220,7 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 		else
 		{
 			currentPlayer = 1 - currentPlayer;
-			setStatusMessage("Current player:" + playerMarks[currentPlayer]);;
+			setStatusMessage("Current player: " + playerMarks[currentPlayer]);;
 		}
-		
 	}
 }
