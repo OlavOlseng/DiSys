@@ -4,7 +4,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import sun.misc.Resource;
 
 import java.awt.*;
 import java.io.IOException;
@@ -134,7 +133,7 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 		try {
 			remotePlayer = (TicTacToeRemote) Naming.lookup(url);
 			remotePlayer.clientConnected(this);
-			Naming.rebind("rmi://" + address +"/TicTacToeClient", this);
+			Naming.rebind("rmi://127.0.0.1:3320/TicTacToeClient", this);
 		} catch (MalformedURLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
