@@ -5,12 +5,14 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 
 
+
 import java.awt.*;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 
 /**
@@ -111,17 +113,19 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 	 * This binds a name for itself in the rmi registry on port 3320, so other people can find it.
 	 */
 	void waitForConnection() {
+	
 		String url = "rmi://127.0.0.1:3320/TicTacToeHost";
 		try {
+			LocateRegistry.createRegistry(3320);
 			Naming.rebind(url, this);
 			
 		} catch (RemoteException e) 
 		{
-			// TODO Auto-generated catch block
+		
 			e.printStackTrace();
 		} catch (MalformedURLException e) 
 		{
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		}
 	}
@@ -142,13 +146,13 @@ public class TicTacToe extends UnicastRemoteObject implements ListSelectionListe
 			statusLabel.setText("Connection success...");
 
 		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+		
 			e.printStackTrace();
 		} catch (NotBoundException e) {
-			// TODO Auto-generated catch block
+			
 			e.printStackTrace();
 		}
 	}
