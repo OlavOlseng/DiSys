@@ -1,0 +1,10 @@
+DiSys Øving 1:
+
+Vi løste problemet på denne måten:
+	TicTacToe er ikke lenger en JFrame men en UnicastRemoteObject. I tillegg implementerer den TicTacToeRemote, som gjør at den kan kalle metoder på andre objekter. 
+	TicTacToeRemote er et interface som spesiferer fjernmetoder, så den implementerer rmi.Remote.
+	Dermed kan brettene gjennom rmiregistryet registrere hverandre som remote objects. Når noe da endres i den ene modellen, vil den invokere den samme el. liknende metode på sitt remote object.
+	Disse metodene er setStatusMessage() og setCell(). I tillegg finnes en remote metode for å registrere klienten hos tjeneren (clientConnected()).
+	
+	Vår løsning funker kun fordi metodene er omnipotente. Det eneste som ikke er omnipotent er endring av hvem som er spilleren, men dette er ordnet ved nøye kontroll på flyten.
+	
