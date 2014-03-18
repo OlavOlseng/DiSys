@@ -161,32 +161,59 @@ class Transaction
    */
   private synchronized boolean acquireLock(ResourceAccess resourceAccess)
   {
-    waitingForResource = resourceAccess;
-    owner.println("Trying to claim lock of resource " + resourceAccess.resourceId + " at server " + resourceAccess.serverId, transactionId);
-    try {
-      if (resourceAccess.server.lockResource(transactionId, resourceAccess.resourceId)) {
-        lockedResources.add(resourceAccess);
-        waitingForResource = null;
-        return true;
-      }
-    } catch (RemoteException re) {
-      owner.lostContactWithServer(resourceAccess.serverId);
-    }
-    waitingForResource = null;
-    System.err.println("We didn't get the lock we wanted! How can that happen?");
-    return false;
+	  waitingForResource = resourceAccess;
+	  owner.println("Trying to claim lock of resource " + resourceAccess.resourceId + " at server " + resourceAccess.serverId, transactionId);
+	  boolean deadlocked = false;
+	  do{
+		  try {
+			  if (resourceAccess.server.lockResource(transactionId, resourceAccess.resourceId)) {
+
+				  lockedResources.add(resourceAccess);
+				  waitingForResource = null;
+				  return true;
+			  }
+		  } catch (RemoteException re) {
+			  owner.lostContactWithServer(resourceAccess.serverId);
+		  }
+
+		  ArrayList<Integer> transactions = new ArrayList<Integer>();
+		  transactions.add(this.transactionId);
+		  this.owner.fireProbe(transactions, waitingForResource.resourceId, waitingForResource.server);
+		  
+	  }while(!abortTransaction);
+
+
+	  waitingForResource = null;
+	  System.err.println("We didn't get the lock we wanted! How can that happen?");
+	  return false;
   }
 
+  public synchronized void receiveProbe(ArrayList<Integer> transactions){
+	  
+	  if(transactions.contains(this.transactionId)){
+		  this.abortTransaction = true;
+		  return;
+	  }
+	  
+	  if(waitingForResource == null) return;
+	
+	  transactions.add(this.transactionId);
+	  this.owner.fireProbe(transactions, waitingForResource.resourceId, waitingForResource.server);
+	  
+  }
+  public synchronized void  flagAbort(){
+	  this.abortTransaction = true;
+  }
   /**
    * Aborts this transaction, releasing all the locks held by it.
    */
   private synchronized void abort()
   {
-	 
-    owner.println("Aborting transaction " + transactionId + '.', transactionId);
-    System.err.println("Aborting transaction " + transactionId + '.' + transactionId);
-    releaseLocks();
-    owner.println("Transaction " + transactionId + " aborted.", transactionId);
+
+	  owner.println("Aborting transaction " + transactionId + '.', transactionId);
+	  System.err.println("Aborting transaction " + transactionId + '.' + transactionId);
+	  releaseLocks();
+	  owner.println("Transaction " + transactionId + " aborted.", transactionId);
   }
 
   /**

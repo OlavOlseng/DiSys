@@ -32,22 +32,30 @@ class Resource
       System.err.println("Error: Transaction " + transactionId + " tried to lock a resource it already has locked!");
       return false;
     }
-    int timeWaited = 0;
-    while (lockOwner != NOT_LOCKED) {
-      try {
-    	  if(timeWaited >= Globals.TIMEOUT_INTERVAL)
-    		  return false;
-        wait(Globals.TIMEOUT_INTERVAL/4);
-        timeWaited += Globals.TIMEOUT_INTERVAL/4;
-        
-      } catch (InterruptedException ie) {
-      }
+    if(Globals.PROBING_ENABLED){
+    	if(lockOwner != NOT_LOCKED)
+			return false;
+    	
+    }else{
+	    int timeWaited = 0;
+	    while (lockOwner != NOT_LOCKED) {
+	      try {
+	    	  if(timeWaited >= Globals.TIMEOUT_INTERVAL ){
+	    		 return false;
+	    	  }
+	        wait(Globals.TIMEOUT_INTERVAL/4);
+	        timeWaited += Globals.TIMEOUT_INTERVAL/4;
+	      } catch (InterruptedException ie) {
+	      }
+	    }
     }
-
     lockOwner = transactionId;
     return true;
   }
 
+
+ 
+  	
   /**
    * Releases the lock of this resource.
    *

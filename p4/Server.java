@@ -1,4 +1,5 @@
 import java.rmi.*;
+import java.util.ArrayList;
 
 /**
  * Remote interface specifying the functionality
@@ -51,4 +52,10 @@ public interface Server extends Remote
    * Called by another server to ask this server to start its transactions.
    */
   void startTransactions() throws RemoteException;
+  
+  void fireProbe(ArrayList<Integer> transactions, int resourceId, Server ownerServer) throws RemoteException;
+  
+  int getLockOwner(int resourceId) throws RemoteException;
+  
+  void receiveProbe(ArrayList<Integer> transactions) throws RemoteException;
 }

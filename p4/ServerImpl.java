@@ -84,6 +84,7 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 	 *            The address of the RMI registry to use.
 	 */
 	public ServerImpl(String ip, String inputfile) throws RemoteException {
+		
 		servers = new HashMap<Integer, Server>();
 		transactionCounter = 0;
 		nofAborts = 0;
@@ -408,10 +409,64 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 	public boolean lockResource(int transactionId, int resourceId)
 			throws RemoteException {
 		Resource r = resources.get(resourceId);
+		
 		boolean result = r.lock(transactionId);
 		if (gui != null)
 			gui.updateResourceTable(resources);
+		
+		
 		return result;
+	}
+	
+	
+	public synchronized void fireProbe(ArrayList<Integer> transactions, int resourceId, Server ownerServer){
+			System.err.println("Fire probe");;
+			new Thread(new Runnable() {
+				
+				@Override
+				public void run() {
+					try {
+						int lockOwner = ownerServer.getLockOwner(resourceId);
+						Server transServer = servers.get(getTransactionOwner(lockOwner));
+						transServer.receiveProbe(transactions);
+					} catch (RemoteException e) {
+						e.printStackTrace();
+					}
+					
+				}
+			})
+		
+		
+		
+	
+	}
+	
+	public synchronized void receiveProbe(ArrayList<Integer> transactions){
+		System.err.println("Received probe");;
+		this.activeTransaction.receiveProbe(transactions);
+	}
+	private class Prober implements Runnable {
+
+		
+		private ArrayList<Transaction> visited;
+		
+		public Prober(Transaction transaction, ServerImpl server ){
+			this.visited = new ArrayList<Transaction>();
+			this.visited.add(transaction);
+			
+		
+		}
+
+		@Override
+		public void run() {
+			 boolean abort = false;
+			 while(!abort){
+				 Transaction current = visited.get(visited.size()-1);
+				 
+				 
+			 }
+			
+		}
 	}
 
 	/**
@@ -430,6 +485,7 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 			throws RemoteException {
 		Resource r = resources.get(resourceId);
 		boolean result = r.unlock(transactionId);
+		
 		if (gui != null)
 			gui.updateResourceTable(resources);
 		return result;
@@ -638,4 +694,13 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 			re.printStackTrace();
 		}
 	}
+
+	
+	@Override
+	public int getLockOwner(int resourceId) {
+		
+		return this.resources.get(resourceId).getLockOwner();
+	}
+
+	
 }
