@@ -182,7 +182,9 @@ class Transaction
    */
   private synchronized void abort()
   {
+	 
     owner.println("Aborting transaction " + transactionId + '.', transactionId);
+    System.err.println("Aborting transaction " + transactionId + '.' + transactionId);
     releaseLocks();
     owner.println("Transaction " + transactionId + " aborted.", transactionId);
   }
