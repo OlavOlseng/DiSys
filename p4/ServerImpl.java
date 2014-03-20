@@ -419,8 +419,9 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 	}
 	
 	
-	public synchronized void fireProbe(ArrayList<Integer> transactions, int resourceId, Server ownerServer){
+	public synchronized void fireProbe(final ArrayList<Integer> transactions, final int resourceId, final Server ownerServer){
 			System.err.println("Fire probe");;
+	
 			new Thread(new Runnable() {
 				
 				@Override
@@ -434,7 +435,7 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 					}
 					
 				}
-			})
+			}).start();
 		
 		
 		
