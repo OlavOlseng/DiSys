@@ -1,0 +1,34 @@
+DiSys P4 report:
+	Changes:
+		To the framework we added several new methods to the Server interface and implementation, these ones are as follows:
+			
+		Server:
+			fireProbe(): NEW
+				Fires a probe and delivers it to the designated server
+				
+			receiveProbe(): NEW
+				Method invoked remotely to receive the probe from the fireProbe() function.
+				
+			int getLockOwner(resourceId): NEW
+				This function finds the lock owner and returns the transaction ID of the transaction who has the lock on the current resource.
+				
+		Transaction:
+			receiveProbe(): NEW
+				New function that receives a probe and performs the cycle check If this transaction is waiting for another resource, it fires a probe to that transaction. If not, it lets the probe thread fade.
+				
+			aquireLock(): CHANGED
+				added a do while loop surrounding the lockResource call. If it fails, it sends a probe and retries, that is if probing is enabled.
+				If probing is not enabled our system runs timeouts
+				
+			Resource():
+				In the lock() function we added a while loop that tries to aquire the lock until it times out (the timeout interval is located in the Globals class)
+				
+	
+	Experimentation results:
+		We tried both methods, using different intervals, using 50 transactions pr server and 4 servers running in parallel on one machine.
+		
+		Timeouts were not programmed dynamically, and was hordcoded into the globals function. Low timeout interval (50ms) yielded great runtimes(30-35s), but a low success rate (around 50%). The high number of aborts is caused by phantom deadlocks, since the maximum waiting time for a transaction is 400ms, and thus it won't wait long enough for a transaction to finish before it aborts.
+		Using a timeout interval at 400ms (equal to maximum processing time) yields 40-45s runtime, and success rate of 60%.
+		
+		The probing funciton ran optimally at around 50ms wait time before probing again. it had a runtime of around 40-45s, but a success rate of 80+%.
+		This yielded the best results of all our experimentation. This is due to the fact that it avoids most, if not all of the phantom deadlocks. As well as only breaking the necessary transactions in a deadlock, and not all of them.
