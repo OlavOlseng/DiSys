@@ -421,23 +421,30 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 	
 	public synchronized void fireProbe(final ArrayList<Integer> transactions, final int resourceId, final Server ownerServer){
 			System.err.println("Fire probe");;
-	
+			final Map<Integer, Server> servers = this.servers;
+		
+			int lockOwner;
+			try {
+				lockOwner = ownerServer.getLockOwner(resourceId);
+				final Server transServer = servers.get(getTransactionOwner(lockOwner));
+				if(transServer == null) return;
 			new Thread(new Runnable() {
-				
 				@Override
 				public void run() {
 					try {
-						int lockOwner = ownerServer.getLockOwner(resourceId);
-						Server transServer = servers.get(getTransactionOwner(lockOwner));
 						transServer.receiveProbe(transactions);
 					} catch (RemoteException e) {
 						e.printStackTrace();
 					}
-					
+						
 				}
 			}).start();
 		
-		
+			} catch (RemoteException e1) {
+
+				e1.printStackTrace();
+			}
+			
 		
 	
 	}

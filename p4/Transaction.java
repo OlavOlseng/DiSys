@@ -179,6 +179,8 @@ class Transaction
 		  ArrayList<Integer> transactions = new ArrayList<Integer>();
 		  transactions.add(this.transactionId);
 		  this.owner.fireProbe(transactions, waitingForResource.resourceId, waitingForResource.server);
+		  
+		  
 		  try {
 			wait(Globals.TIMEOUT_INTERVAL);
 		} catch (InterruptedException e) {
