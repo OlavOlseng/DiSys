@@ -451,7 +451,8 @@ public class ServerImpl extends UnicastRemoteObject implements Server {
 	
 	public synchronized void receiveProbe(ArrayList<Integer> transactions){
 		System.err.println("Received probe");;
-		this.activeTransaction.receiveProbe(transactions);
+		if(this.activeTransaction == null) return;
+			this.activeTransaction.receiveProbe(transactions);
 	}
 	private class Prober implements Runnable {
 
